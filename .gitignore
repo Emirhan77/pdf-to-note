@@ -22,6 +22,6 @@ database/*.sqlite
 
 uploads/*
 sample_pdfs/
+docs/
 experiments/results/*.json
 experiments/results/*.md
-docs/rendered_proje_raporu/
