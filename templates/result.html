@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Analiz Sonucu — {{ document.file_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand" aria-label="PDF Not">
+            <span class="brand-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+            </span>
+            PDF Not
+        </div>
+        <nav aria-label="Ana menü">
+            <a href="{{ url_for('app_index') }}" data-nav>Yeni Analiz</a>
+            <a href="{{ url_for('history') }}" data-nav>Geçmiş</a>
+            <a href="{{ url_for('logout') }}" class="nav-logout" data-nav>Çıkış</a>
+        </nav>
+    </header>
+
+    <main class="shell">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert" role="alert">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="page-header">
+            <h1>Analiz sonucu</h1>
+            <p>{{ document.file_name }}</p>
+        </div>
+
+        <section class="stats" aria-label="Özet istatistikler">
+            <div class="stat-card">
+                <span>Dosya</span>
+                <strong title="{{ document.file_name }}">{{ document.file_name }}</strong>
+            </div>
+            <div class="stat-card">
+                <span>Sayfa</span>
+                <strong>{{ document.page_count }}</strong>
+            </div>
+            <div class="stat-card">
+                <span>İşlem süresi</span>
+                <strong>{{ "%.2f"|format(analysis.analysis.processing_time) }} sn</strong>
+            </div>
+            <div class="stat-card">
+                <span>Soru</span>
+                <strong>{{ (study_pack.questions|length) if study_pack and study_pack.questions else (analysis.questions|length) }}</strong>
+            </div>
+            <div class="stat-card">
+                <span>Bulut</span>
+                {% if document.cloud_url %}
+                    <strong><a href="{{ document.cloud_url }}" target="_blank" rel="noopener noreferrer">PDF indir</a></strong>
+                {% else %}
+                    <strong>Lokal</strong>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Ders notu</h2>
+            {% if export_links and (export_links.json_url or export_links.markdown_url) %}
+                <div class="export-links">
+                    {% if export_links.json_url %}
+                        <a href="{{ export_links.json_url }}" download>↓ JSON Export</a>
+                    {% endif %}
+                    {% if export_links.markdown_url %}
+                        <a href="{{ export_links.markdown_url }}" download>↓ Markdown Export</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if study_pack and (study_pack.fallback_reason or study_pack.llm_error_type or study_pack.provider_attempted) %}
+                <div class="alert" role="status">
+                    {% if study_pack.provider %}<p><strong>Üretim modu:</strong> {{ study_pack.provider }}</p>{% endif %}
+                    {% if study_pack.provider_attempted %}<p><strong>Denenen LLM:</strong> {{ study_pack.provider_attempted }}</p>{% endif %}
+                    {% if study_pack.llm_error_type %}<p><strong>LLM hata türü:</strong> {{ study_pack.llm_error_type }}</p>{% endif %}
+                    {% if study_pack.fallback_reason %}<p>{{ study_pack.fallback_reason }}</p>{% endif %}
+                    {% if study_pack.raw_response_preview %}
+                        <details>
+                            <summary>Ham LLM yanıt önizleme</summary>
+                            <pre>{{ study_pack.raw_response_preview }}</pre>
+                        </details>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if study_pack and study_pack.sections %}
+                <div class="section-cards">
+                    {% for section in study_pack.sections %}
+                        <article class="section-card">
+                            <h3>{{ section.heading }}</h3>
+                            {% if section.content %}<p>{{ section.content }}</p>{% endif %}
+                            {% if section.key_points %}
+                                <ul>
+                                    {% for point in section.key_points %}
+                                        <li>{{ point }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="notes-body">{{ analysis.analysis.generated_notes }}</div>
+            {% endif %}
+        </section>
+
+        <section class="panel">
+            <h2>Anahtar kavramlar</h2>
+            {% set keywords = (study_pack.keywords if study_pack and study_pack.keywords else analysis.analysis.keywords.split(',')) %}
+            {% if keywords %}
+                <div class="keyword-chips" role="list" aria-label="Anahtar kavram listesi">
+                    {% for keyword in keywords %}
+                        {% set clean_kw = keyword.strip() %}
+                        {% if clean_kw %}
+                            <span class="chip" role="listitem">{{ clean_kw }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Anahtar kavram bulunamadı.</p>
+            {% endif %}
+        </section>
+
+        <section class="panel">
+            <h2>Soru-cevaplar</h2>
+            {% set structured_questions = (study_pack.questions if study_pack and study_pack.questions else []) %}
+            {% if structured_questions %}
+                <div class="questions">
+                    {% for question in structured_questions %}
+                        <article class="question-card">
+                            <div class="question-card-header">
+                                <span class="question-number" aria-hidden="true">{{ loop.index }}</span>
+                                <h3>Soru {{ loop.index }}</h3>
+                            </div>
+                            <div class="question-card-body">
+                                <p class="q-text">{{ question.question }}</p>
+                                <p class="a-text"><strong>Cevap:</strong> {{ question.answer }}</p>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% elif analysis.questions %}
+                <div class="questions">
+                    {% for question in analysis.questions %}
+                        <article class="question-card">
+                            <div class="question-card-header">
+                                <span class="question-number" aria-hidden="true">{{ loop.index }}</span>
+                                <h3>Soru {{ loop.index }}</h3>
+                            </div>
+                            <div class="question-card-body">
+                                <p class="q-text">{{ question.question_text }}</p>
+                                <p class="a-text"><strong>Cevap:</strong> {{ question.answer_text }}</p>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Bu analizde soru kaydı bulunamadı.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

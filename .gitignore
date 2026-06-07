@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.venv/
+.cursor/
+.pytest_cache/
+memory-bank/
+AGENTS.md
+*.log
+desktop.ini
+Analiz Sonucu.pdf
+
+.env
+.env.*
+!.env.example
+
+database/*.db
+database/*.db-journal
+database/*.sqlite
+
+uploads/*
+sample_pdfs/*.pdf
+experiments/results/*.json
+experiments/results/*.md
+docs/rendered_proje_raporu/

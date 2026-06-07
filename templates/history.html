@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Geçmiş Analizler</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand" aria-label="PDF Not">
+            <span class="brand-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+            </span>
+            PDF Not
+        </div>
+        <nav aria-label="Ana menü">
+            <a href="{{ url_for('app_index') }}" data-nav>Yeni Analiz</a>
+            <a href="{{ url_for('history') }}" data-nav>Geçmiş</a>
+            <a href="{{ url_for('logout') }}" class="nav-logout" data-nav>Çıkış</a>
+        </nav>
+    </header>
+
+    <main class="shell">
+        <div class="page-header">
+            <h1>Geçmiş analizler</h1>
+            <p>Daha önce işlenen PDF dosyalarınızı görüntüleyin ve sonuçlara dönün.</p>
+        </div>
+
+        <section class="panel">
+            {% if documents %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Dosya</th>
+                                <th scope="col">Sayfa</th>
+                                <th scope="col">Soru</th>
+                                <th scope="col">Durum</th>
+                                <th scope="col">Tarih</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in documents %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('result', document_id=document.id) }}">{{ document.file_name }}</a>
+                                    </td>
+                                    <td>{{ document.page_count }}</td>
+                                    <td>{{ document.question_count }}</td>
+                                    <td>
+                                        {% if document.processing_status in ['completed', 'done', 'success'] %}
+                                            <span class="status-badge status-badge--done">{{ document.processing_status }}</span>
+                                        {% else %}
+                                            <span class="status-badge status-badge--pending">{{ document.processing_status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ document.upload_date }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon" aria-hidden="true">📋</div>
+                    <p>Henüz analiz yok.</p>
+                    <p><a href="{{ url_for('app_index') }}">İlk analizinizi başlatın →</a></p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
