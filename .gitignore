@@ -8,6 +8,9 @@ AGENTS.md
 *.log
 desktop.ini
 Analiz Sonucu.pdf
+Bulut Bilişim Projesi.md
+Bulut Bilişim Projesi.pdf
+Project_Plan.md
 
 .env
 .env.*
@@ -18,7 +21,7 @@ database/*.db-journal
 database/*.sqlite
 
 uploads/*
-sample_pdfs/*.pdf
+sample_pdfs/
 experiments/results/*.json
 experiments/results/*.md
 docs/rendered_proje_raporu/
